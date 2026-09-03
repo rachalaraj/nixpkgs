@@ -6,6 +6,7 @@
   ninja,
   pkg-config,
   qt6,
+  caelestia-shell,
   nix-update-script,
   testers,
 }:
@@ -42,6 +43,12 @@ stdenv.mkDerivation (finalAttrs: {
   cmakeFlags = [
     (lib.cmakeFeature "FLIGHTDECK_VERSION" finalAttrs.version)
   ];
+
+  preFixup = ''
+    qtWrapperArgs+=(
+      --prefix QML2_IMPORT_PATH : "${caelestia-shell.plugin}/lib/qt6/qml:${caelestia-shell.m3shapesModule}/lib/qt6/qml"
+    )
+  '';
 
   passthru = {
     updateScript = nix-update-script { };

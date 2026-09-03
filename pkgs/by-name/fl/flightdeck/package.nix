@@ -46,7 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   preFixup = ''
     qtWrapperArgs+=(
-      --prefix QML2_IMPORT_PATH : "${caelestia-shell.plugin}/lib/qt6/qml:${caelestia-shell.m3shapesModule}/lib/qt6/qml"
+      --prefix QML2_IMPORT_PATH : "${caelestia-shell.plugin}/${qt6.qtbase.qtQmlPrefix}:${caelestia-shell.m3shapesModule}/${qt6.qtbase.qtQmlPrefix}"
     )
   '';
 

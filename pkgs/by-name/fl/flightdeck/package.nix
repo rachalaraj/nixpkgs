@@ -22,7 +22,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "AstraSuite";
     repo = "FlightDeck";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-pZNpUpnKheQmNW5hPmx6a90eIUBje/FkdOC9Nb+9zSA=";
+    hash = "sha256-GXRHPCxjV5vQs/ZDJQDIULQqJu0WSSOJ1Iq5VX6NB8A=";
   };
 
   nativeBuildInputs = [

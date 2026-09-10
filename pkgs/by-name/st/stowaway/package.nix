@@ -15,7 +15,7 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "stowaway";
-  version = "1.0.0";
+  version = "1.0.1";
 
   __structuredAttrs = true;
   strictDeps = true;
@@ -24,7 +24,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "AstraSuite";
     repo = "Stowaway";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-90KdJImynRk4gSLPsmasNvxryN0XFPh8eApsYl7YSiM=";
+    hash = "sha256-8IQvpDudoADAkdtPHuretEnTJDYqUDVvmj8bbH5Wj1M=";
   };
 
   postPatch = ''
@@ -32,6 +32,8 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail '/etc/xdg/quickshell/astra-stowaway/shell.qml' "$out/etc/xdg/quickshell/astra-stowaway/shell.qml" \
       --replace-fail '"/usr/lib/qt6/qml"' "\"$out/lib/qt6/qml\"" \
       --replace-fail '"/usr/lib/qt6/qml/Astra/Stowaway"' "\"$out/lib/qt6/qml/Astra/Stowaway\""
+    substituteInPlace assets/stowaway.service \
+      --replace-fail 'ExecStart=stowaway' "ExecStart=$out/bin/stowaway"
   '';
 
   nativeBuildInputs = [

@@ -16,6 +16,34 @@ in
 
     resizer.enable = lib.mkEnableOption "the caelestia window resizer daemon service";
 
+    cursor = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to install and set Bibata-Caelestia as the default cursor theme.
+        '';
+      };
+
+      package = lib.mkPackageOption pkgs "bibata-caelestia" { };
+
+      theme = lib.mkOption {
+        type = lib.types.str;
+        default = "Bibata-Caelestia";
+        description = ''
+          The cursor theme name to set in fallback themes and session variables.
+        '';
+      };
+
+      size = lib.mkOption {
+        type = lib.types.int;
+        default = 24;
+        description = ''
+          Default cursor size.
+        '';
+      };
+    };
+
     recommendedServices = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -37,6 +65,7 @@ in
           pkgs.caelestia-cli
           pkgs.procps
         ]
+        ++ lib.optional cfg.cursor.enable cfg.cursor.package
         ++ lib.optionals cfg.recommendedServices.enable [
           pkgs.swappy
           pkgs.grim
@@ -48,6 +77,15 @@ in
           pkgs.trash-cli
           pkgs.hyprpicker
         ];
+
+        xdg.icons.fallbackCursorThemes = lib.mkIf cfg.cursor.enable (lib.mkDefault [ cfg.cursor.theme ]);
+
+        environment.sessionVariables = lib.mkIf cfg.cursor.enable {
+          XCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+          XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+          HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+          HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+        };
 
         fonts.packages = with pkgs; [
           material-symbols

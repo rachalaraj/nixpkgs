@@ -57,7 +57,13 @@ in
     };
 
     flightdeck = {
-      enable = lib.mkEnableOption "FlightDeck, a Hyprland configuration manager for Caelestia Shell";
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to install FlightDeck, a Hyprland configuration manager for Caelestia Shell.
+        '';
+      };
 
       package = lib.mkPackageOption pkgs "flightdeck" { };
     };

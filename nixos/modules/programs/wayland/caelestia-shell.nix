@@ -56,6 +56,12 @@ in
       package = lib.mkPackageOption pkgs "xdg-desktop-portal-wormhole" { };
     };
 
+    flightdeck = {
+      enable = lib.mkEnableOption "FlightDeck, a Hyprland configuration manager for Caelestia Shell";
+
+      package = lib.mkPackageOption pkgs "flightdeck" { };
+    };
+
     recommendedServices = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -97,6 +103,7 @@ in
           pkgs.cliphist
         ]
         ++ lib.optional cfg.cursor.enable cfg.cursor.package
+        ++ lib.optional cfg.flightdeck.enable cfg.flightdeck.package
         ++ lib.optionals cfg.recommendedServices.enable [
           pkgs.swappy
           pkgs.grim

@@ -44,6 +44,18 @@ in
       };
     };
 
+    portal = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to configure xdg-desktop-portal and add xdg-desktop-portal-wormhole as an extra portal for Caelestia Shell.
+        '';
+      };
+
+      package = lib.mkPackageOption pkgs "xdg-desktop-portal-wormhole" { };
+    };
+
     recommendedServices = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -85,6 +97,15 @@ in
           XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
           HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
           HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+        };
+
+        xdg.portal = lib.mkIf cfg.portal.enable {
+          enable = lib.mkDefault true;
+          extraPortals = [
+            cfg.portal.package
+            pkgs.xdg-desktop-portal-gtk
+          ];
+          configPackages = [ cfg.portal.package ];
         };
 
         fonts.packages = with pkgs; [

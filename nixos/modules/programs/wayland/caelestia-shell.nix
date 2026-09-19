@@ -62,7 +62,7 @@ in
         default = true;
         description = ''
           Whether to enable peripheral hardware services and integrations
-          (Bluetooth, I2C, Power Profiles Daemon, Geoclue2, GNOME Keyring, and GPU Screen Recorder).
+          (Bluetooth, I2C, Power Profiles Daemon, Geoclue2, and GPU Screen Recorder).
         '';
       };
     };
@@ -79,6 +79,7 @@ in
         };
         services.upower.enable = lib.mkDefault true;
         services.accounts-daemon.enable = lib.mkDefault true;
+        services.gnome.gnome-keyring.enable = lib.mkDefault true;
         networking.networkmanager.enable = lib.mkDefault true;
 
         hardware.graphics.enable = lib.mkDefault true;
@@ -200,7 +201,6 @@ in
 
         services = {
           power-profiles-daemon.enable = lib.mkDefault true;
-          gnome.gnome-keyring.enable = lib.mkDefault true;
           geoclue2 = {
             enable = lib.mkDefault true;
             enableDemoAgent = lib.mkDefault true;

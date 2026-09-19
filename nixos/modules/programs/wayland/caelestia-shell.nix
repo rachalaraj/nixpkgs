@@ -44,6 +44,26 @@ in
       };
     };
 
+    icons = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to install Papirus icon theme and papirus-folders for Caelestia Shell.
+        '';
+      };
+
+      package = lib.mkPackageOption pkgs "papirus-icon-theme" { };
+
+      theme = lib.mkOption {
+        type = lib.types.str;
+        default = "Papirus-Dark";
+        description = ''
+          The icon theme name to set in session variables.
+        '';
+      };
+    };
+
     portal = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -109,6 +129,10 @@ in
           pkgs.cliphist
         ]
         ++ lib.optional cfg.cursor.enable cfg.cursor.package
+        ++ lib.optionals cfg.icons.enable [
+          cfg.icons.package
+          pkgs.papirus-folders
+        ]
         ++ lib.optional cfg.flightdeck.enable cfg.flightdeck.package
         ++ lib.optionals cfg.recommendedServices.enable [
           pkgs.swappy
@@ -121,12 +145,17 @@ in
 
         xdg.icons.fallbackCursorThemes = lib.mkIf cfg.cursor.enable (lib.mkDefault [ cfg.cursor.theme ]);
 
-        environment.sessionVariables = lib.mkIf cfg.cursor.enable {
-          XCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
-          XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
-          HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
-          HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
-        };
+        environment.sessionVariables = lib.mkMerge [
+          (lib.mkIf cfg.cursor.enable {
+            XCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+            XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+            HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+            HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+          })
+          (lib.mkIf cfg.icons.enable {
+            QS_ICON_THEME = lib.mkDefault cfg.icons.theme;
+          })
+        ];
 
         xdg.portal = lib.mkIf cfg.portal.enable {
           enable = lib.mkDefault true;

@@ -49,7 +49,7 @@ in
         type = lib.types.bool;
         default = true;
         description = ''
-          Whether to configure xdg-desktop-portal and add xdg-desktop-portal-wormhole as an extra portal for Caelestia Shell.
+          Whether to configure xdg-desktop-portal and add xdg-desktop-portal-wormhole as the desktop portal for Caelestia Shell.
         '';
       };
 
@@ -61,9 +61,8 @@ in
         type = lib.types.bool;
         default = true;
         description = ''
-          Whether to enable recommended services and integrations used by Caelestia's widgets
-          (Hyprland, NetworkManager, PipeWire, GeoClue2, UPower, Power Profiles Daemon, Accounts Daemon,
-          GNOME Keyring, Bluetooth, I2C, and GPU Screen Recorder).
+          Whether to enable peripheral hardware services and integrations
+          (Bluetooth, I2C, Power Profiles Daemon, Geoclue2, GNOME Keyring, and GPU Screen Recorder).
         '';
       };
     };
@@ -72,19 +71,35 @@ in
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
+        programs.hyprland.enable = lib.mkDefault true;
+
+        services.pipewire = {
+          enable = lib.mkDefault true;
+          pulse.enable = lib.mkDefault true;
+        };
+        services.upower.enable = lib.mkDefault true;
+        services.accounts-daemon.enable = lib.mkDefault true;
+        networking.networkmanager.enable = lib.mkDefault true;
+
+        hardware.graphics.enable = lib.mkDefault true;
+        security = {
+          polkit.enable = lib.mkDefault true;
+          rtkit.enable = lib.mkDefault true;
+        };
+
         environment.systemPackages = [
           cfg.package
           pkgs.caelestia-cli
           pkgs.procps
+          pkgs.polkit_gnome
+          pkgs.wl-clipboard
+          pkgs.cliphist
         ]
         ++ lib.optional cfg.cursor.enable cfg.cursor.package
         ++ lib.optionals cfg.recommendedServices.enable [
           pkgs.swappy
           pkgs.grim
           pkgs.slurp
-          pkgs.cliphist
-          pkgs.wl-clipboard
-          pkgs.polkit_gnome
           pkgs.gammastep
           pkgs.trash-cli
           pkgs.hyprpicker
@@ -114,13 +129,6 @@ in
           nerd-fonts.caskaydia-cove
           nerd-fonts.jetbrains-mono
         ];
-
-        hardware.graphics.enable = lib.mkDefault true;
-
-        security = {
-          polkit.enable = lib.mkDefault true;
-          rtkit.enable = lib.mkDefault true;
-        };
 
         systemd.user.services = {
           caelestia-shell = {
@@ -181,7 +189,6 @@ in
       }
 
       (lib.mkIf cfg.recommendedServices.enable {
-        programs.hyprland.enable = lib.mkDefault true;
         programs.gpu-screen-recorder.enable = lib.mkDefault true;
 
         hardware = {
@@ -189,13 +196,10 @@ in
           i2c.enable = lib.mkDefault true;
         };
 
-        networking.networkmanager.enable = lib.mkDefault true;
         location.provider = lib.mkDefault "geoclue2";
 
         services = {
-          upower.enable = lib.mkDefault true;
           power-profiles-daemon.enable = lib.mkDefault true;
-          accounts-daemon.enable = lib.mkDefault true;
           gnome.gnome-keyring.enable = lib.mkDefault true;
           geoclue2 = {
             enable = lib.mkDefault true;
@@ -204,10 +208,6 @@ in
               isAllowed = true;
               isSystem = true;
             };
-          };
-          pipewire = {
-            enable = lib.mkDefault true;
-            pulse.enable = lib.mkDefault true;
           };
         };
       })

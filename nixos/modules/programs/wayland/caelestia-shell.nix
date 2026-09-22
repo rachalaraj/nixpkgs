@@ -164,6 +164,16 @@ in
             pkgs.xdg-desktop-portal-gtk
           ];
           configPackages = [ cfg.portal.package ];
+          config = {
+            common.default = lib.mkDefault [
+              "wormhole"
+              "gtk"
+            ];
+            hyprland.default = lib.mkDefault [
+              "wormhole"
+              "gtk"
+            ];
+          };
         };
 
         fonts.packages = with pkgs; [

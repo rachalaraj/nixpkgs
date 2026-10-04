@@ -120,6 +120,12 @@ in
           rtkit.enable = lib.mkDefault true;
         };
 
+        systemd.user.tmpfiles.rules = [
+          "d %h/.config/caelestia 0755 - - -"
+          "C %h/.config/caelestia/hypr-vars.lua 0644 - - - ${pkgs.writeText "hypr-vars.lua" "return {}\n"}"
+          "C %h/.config/caelestia/hypr-user.lua 0644 - - - ${pkgs.writeText "hypr-user.lua" "-- User Hyprland configuration\n"}"
+        ];
+
         environment.systemPackages = [
           cfg.package
           pkgs.caelestia-cli

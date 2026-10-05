@@ -47,12 +47,6 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     substituteInPlace src/caelestia/caelestiavars.cpp src/hyprland/hyprlandschema.cpp \
       --replace-fail '/usr/share/flightdeck' "$out/share/flightdeck"
- 
-    substituteInPlace data/schema/caelestia_variables.json \
-      --replace-fail '"hyprKeyword": "gestures:workspace_swipe_fingers",' ""
-
-    substituteInPlace src/managers/airlockmanager.cpp \
-      --replace-fail '{ "workspaceSwipeFingers", "gestures:workspace_swipe_fingers", 4 },' ""
   '';
 
   postInstall = ''

@@ -75,19 +75,6 @@ in
 
       package = lib.mkPackageOption pkgs "xdg-desktop-portal-wormhole" { };
     };
-
-    flightdeck = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = ''
-          Whether to install FlightDeck, a Hyprland configuration manager for Caelestia Shell.
-        '';
-      };
-
-      package = lib.mkPackageOption pkgs "flightdeck" { };
-    };
-
     recommendedServices = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -139,7 +126,6 @@ in
           cfg.icons.package
           pkgs.papirus-folders
         ]
-        ++ lib.optional cfg.flightdeck.enable cfg.flightdeck.package
         ++ lib.optionals cfg.recommendedServices.enable [
           pkgs.swappy
           pkgs.grim

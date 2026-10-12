@@ -14,6 +14,25 @@ in
 
     package = lib.mkPackageOption pkgs "caelestia-shell" { };
 
+    systemd = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to enable the Caelestia Shell systemd user service.
+        '';
+      };
+
+      target = lib.mkOption {
+        type = lib.types.str;
+        default = "graphical-session.target";
+        example = "wayland-session@Hyprland.target";
+        description = ''
+          The systemd user target that will automatically start the Caelestia Shell service.
+        '';
+      };
+    };
+
     resizer.enable = lib.mkEnableOption "the caelestia window resizer daemon service";
 
     cursor = {
@@ -75,6 +94,7 @@ in
 
       package = lib.mkPackageOption pkgs "xdg-desktop-portal-wormhole" { };
     };
+
     recommendedServices = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -92,13 +112,15 @@ in
       {
         programs.hyprland.enable = lib.mkDefault true;
 
-        services.pipewire = {
-          enable = lib.mkDefault true;
-          pulse.enable = lib.mkDefault true;
+        services = {
+          pipewire = {
+            enable = lib.mkDefault true;
+            pulse.enable = lib.mkDefault true;
+          };
+          upower.enable = lib.mkDefault true;
+          accounts-daemon.enable = lib.mkDefault true;
+          gnome.gnome-keyring.enable = lib.mkDefault true;
         };
-        services.upower.enable = lib.mkDefault true;
-        services.accounts-daemon.enable = lib.mkDefault true;
-        services.gnome.gnome-keyring.enable = lib.mkDefault true;
         networking.networkmanager.enable = lib.mkDefault true;
 
         hardware.graphics.enable = lib.mkDefault true;
@@ -113,41 +135,62 @@ in
           "C %h/.config/caelestia/hypr-user.lua 0644 - - - ${pkgs.writeText "hypr-user.lua" "-- User Hyprland configuration\n"}"
         ];
 
-        environment.systemPackages = [
-          cfg.package
-          pkgs.caelestia-cli
-          pkgs.procps
-          pkgs.polkit_gnome
-          pkgs.wl-clipboard
-          pkgs.cliphist
-        ]
-        ++ lib.optional cfg.cursor.enable cfg.cursor.package
-        ++ lib.optionals cfg.icons.enable [
-          cfg.icons.package
-          pkgs.papirus-folders
-        ]
-        ++ lib.optionals cfg.recommendedServices.enable [
-          pkgs.swappy
-          pkgs.grim
-          pkgs.slurp
-          pkgs.gammastep
-          pkgs.trash-cli
-          pkgs.hyprpicker
-        ];
+        environment = {
+          systemPackages = [
+            cfg.package
+            pkgs.caelestia-cli
+            pkgs.procps
+            pkgs.polkit_gnome
+            (pkgs.writeShellScriptBin "polkit-gnome-authentication-agent-1" ''
+              exec ${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1 "$@"
+            '')
+            pkgs.qtengine
+            pkgs.wl-clipboard
+            pkgs.cliphist
+            pkgs.adw-gtk3
+          ]
+          ++ lib.optional cfg.cursor.enable cfg.cursor.package
+          ++ lib.optionals cfg.icons.enable [
+            cfg.icons.package
+            pkgs.papirus-folders
+          ]
+          ++ lib.optionals cfg.recommendedServices.enable [
+            pkgs.swappy
+            pkgs.grim
+            pkgs.slurp
+            pkgs.gammastep
+            pkgs.trash-cli
+            pkgs.hyprpicker
+            (pkgs.writeShellScriptBin "geoclue-demo-agent" ''
+              exec ${config.services.geoclue2.package}/libexec/geoclue-2.0/demos/agent "$@"
+            '')
+          ];
+
+          etc = lib.mkIf cfg.icons.enable {
+            "xdg/gtk-3.0/settings.ini".text = ''
+              [Settings]
+              gtk-icon-theme-name=${cfg.icons.theme}
+            '';
+            "xdg/gtk-4.0/settings.ini".text = ''
+              [Settings]
+              gtk-icon-theme-name=${cfg.icons.theme}
+            '';
+          };
+
+          sessionVariables = lib.mkMerge [
+            (lib.mkIf cfg.cursor.enable {
+              XCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+              XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+              HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
+              HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
+            })
+            (lib.mkIf cfg.icons.enable {
+              QS_ICON_THEME = lib.mkDefault cfg.icons.theme;
+            })
+          ];
+        };
 
         xdg.icons.fallbackCursorThemes = lib.mkIf cfg.cursor.enable (lib.mkDefault [ cfg.cursor.theme ]);
-
-        environment.sessionVariables = lib.mkMerge [
-          (lib.mkIf cfg.cursor.enable {
-            XCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
-            XCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
-            HYPRCURSOR_THEME = lib.mkDefault cfg.cursor.theme;
-            HYPRCURSOR_SIZE = lib.mkDefault (toString cfg.cursor.size);
-          })
-          (lib.mkIf cfg.icons.enable {
-            QS_ICON_THEME = lib.mkDefault cfg.icons.theme;
-          })
-        ];
 
         xdg.portal = lib.mkIf cfg.portal.enable {
           enable = lib.mkDefault true;
@@ -176,21 +219,14 @@ in
         ];
 
         systemd.user.services = {
-          caelestia-shell = {
+          caelestia-shell = lib.mkIf cfg.systemd.enable {
             description = "Caelestia Shell Wayland desktop UI";
             documentation = [ "https://github.com/caelestia-dots/shell" ];
-            partOf = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
-            after = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
-            wantedBy = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
+            partOf = [ cfg.systemd.target ];
+            after = [ cfg.systemd.target ];
+            wantedBy = [ cfg.systemd.target ];
+
+            enableDefaultPath = false;
 
             serviceConfig = {
               Type = "exec";
@@ -206,21 +242,14 @@ in
             };
           };
 
-          caelestia-resizer = lib.mkIf cfg.resizer.enable {
+          caelestia-resizer = lib.mkIf (cfg.resizer.enable && cfg.systemd.enable) {
             description = "Caelestia window resizer daemon";
             documentation = [ "https://github.com/caelestia-dots/cli" ];
-            partOf = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
-            after = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
-            wantedBy = [
-              "graphical-session.target"
-              "wayland-session@Hyprland.target"
-            ];
+            partOf = [ cfg.systemd.target ];
+            after = [ cfg.systemd.target ];
+            wantedBy = [ cfg.systemd.target ];
+
+            enableDefaultPath = false;
 
             serviceConfig = {
               Type = "exec";
@@ -247,7 +276,7 @@ in
           power-profiles-daemon.enable = lib.mkDefault true;
           geoclue2 = {
             enable = lib.mkDefault true;
-            enableDemoAgent = lib.mkDefault true;
+            enableDemoAgent = lib.mkForce true;
             appConfig.gammastep = {
               isAllowed = true;
               isSystem = true;

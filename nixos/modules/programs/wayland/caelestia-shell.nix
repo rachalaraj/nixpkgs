@@ -15,13 +15,7 @@ in
     package = lib.mkPackageOption pkgs "caelestia-shell" { };
 
     systemd = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = ''
-          Whether to enable the Caelestia Shell systemd user service.
-        '';
-      };
+      enable = lib.mkEnableOption "the Caelestia Shell systemd user service";
 
       target = lib.mkOption {
         type = lib.types.str;
@@ -242,7 +236,7 @@ in
             };
           };
 
-          caelestia-resizer = lib.mkIf (cfg.resizer.enable && cfg.systemd.enable) {
+          caelestia-resizer = lib.mkIf cfg.resizer.enable {
             description = "Caelestia window resizer daemon";
             documentation = [ "https://github.com/caelestia-dots/cli" ];
             partOf = [ cfg.systemd.target ];
